@@ -14,6 +14,16 @@ public class MessageManagement {
     private WebElement lastMessage;
     private int messageStatus;
     private boolean isRead;
+    private String comment;
+    private boolean received;
+
+    public boolean isReceived() {
+        return received;
+    }
+
+    public void setReceived(boolean received) {
+        this.received = received;
+    }
 
     public boolean isRead() {
         return isRead;
@@ -57,10 +67,9 @@ public class MessageManagement {
 
                     Thread.sleep(1000);
                 }
-
                 WebElement chat = driver.findElement(By.className("_33LGR"));
                 WebElement chatBody = chat.findElement(By.cssSelector("div[tabindex='-1'][class='_3K4-L']"));
-                List<WebElement> allMessage = chatBody.findElements(By.className("_22Msk"));
+                List<WebElement> allMessage = chatBody.findElements(By.cssSelector("div[tabindex='-1']"));
                 this.lastMessage = allMessage.get(allMessage.size() - 1);
 
             } catch (Exception e) {
@@ -86,7 +95,6 @@ public class MessageManagement {
                         this.messageStatus = DELIVER;
                     }
                 } while (!status.equals(" נקראה "));
-                System.out.println("5");
                 this.isRead=true;
             } catch (Exception e) {
                 messageStatus();
@@ -94,4 +102,34 @@ public class MessageManagement {
         }).start();
 
     }
+
+    public String comment(ChromeDriver driver){
+        new Thread(()->{
+            while (!this.isSent){
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            while (true){
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                this.lastMessage=getLastMessage(driver);
+                String messageClass=this.lastMessage.getAttribute("class");
+                if (messageClass.contains("message-in")){
+                    WebElement comment=this.lastMessage.findElement(By.cssSelector("span[dir='rtl']"));
+                    this.comment=comment.getText();
+                    this.received=true;
+                    break;
+                }
+            }
+
+        }).start();
+        return this.comment;
+    }
+
 }

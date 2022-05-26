@@ -27,6 +27,7 @@ public class WhatsAppScene extends JPanel {
     private WebElement lastMessage;
     private boolean isRead;
     private MessageManagement management;
+    private String comment;
 
 
 
@@ -88,6 +89,21 @@ public class WhatsAppScene extends JPanel {
         this.lastMessage=this.management.getLastMessage(this.driver);
             this.management.messageStatus();
             messageStatus();
+            this.comment=this.management.comment(this.driver);
+            new Thread(()->{
+                while (!this.management.isReceived()){
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                System.out.println(this.comment);
+                print(this.comment);
+
+            }).start();
+
 
 
 
@@ -115,6 +131,7 @@ public class WhatsAppScene extends JPanel {
             printMessageStatus("VV", Color.blue);
         }).start();
     }
+
 
     private void printMessageSent(){
         JLabel messageSent = Helper.addLabel(this, "Message Sent successfully", this.getWidth() / 2 - SEND_PRINT_WIDTH / 2, this.getHeight() * 4 / 5 - SEND_PRINT_HEIGHT / 2, SEND_PRINT_WIDTH, SEND_PRINT_HEIGHT);
