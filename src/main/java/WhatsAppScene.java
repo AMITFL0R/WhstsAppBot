@@ -1,11 +1,8 @@
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class WhatsAppScene extends JPanel {
 
@@ -29,12 +26,15 @@ public class WhatsAppScene extends JPanel {
     private boolean isSent;
     private WebElement lastMessage;
     private boolean isRead;
+    private MessageManagement management;
+
 
 
 
     public WhatsAppScene(int x, int y, int width, int height) {
         this.setBounds(x, y, width, height);
         this.setLayout(null);
+        this.management=new MessageManagement();
         mainView();
         logInListener();
         this.backGround = new ImageIcon("C:\\Users\\DELL\\IdeaProjects\\NewWhatsApp\\src\\main\\resources\\whatsapp web.png");
@@ -80,79 +80,57 @@ public class WhatsAppScene extends JPanel {
             new Thread(() -> {
             }).start();
         }
-        sendMessage();
+        new Thread(()->{
+            this.driver=this.management.sendMessage(this.driver,this.textField.getText());
+            printMessageSent();
+        }).start();
         print("connection succeeded");
-        new Thread(()->{
-            getLastMessage();
+        this.lastMessage=this.management.getLastMessage(this.driver);
+            this.management.messageStatus();
             messageStatus();
-        }).start();
+
+
 
     }
-    private void getLastMessage() {
-        new Thread(()->{
-            try {
-                while (!this.isSent) {
-                    Thread.sleep(1000);
 
+    private void messageStatus(){
+        new Thread(()-> {
+            while (!this.management.isSent()){
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                WebElement chat = this.driver.findElement(By.className("_33LGR"));
-                WebElement chatBody = chat.findElement(By.cssSelector("div[tabindex='-1'][class='_3K4-L']"));
-                List<WebElement> allMessage = chatBody.findElements(By.className("_22Msk"));
-                this.lastMessage = allMessage.get(allMessage.size() - 1);
-            } catch (Exception e) {
-                getLastMessage();
             }
-        }).start();
-    }
-
-
-    private void messageStatus() {
-        new Thread(() -> {
-            WebElement messageStatus = null;
-            try {
-                String status;
-                do {
-                    messageStatus = this.lastMessage.findElement(By.cssSelector("span[data-testid='msg-dblcheck']"));
-                    status = messageStatus.getAttribute("aria-label");
-                    if (status.equals(" נמסרה ")) {
+            while (!this.management.isRead()){
+                switch (this.management.getMessageStatus()){
+                    case MessageManagement.SENT:
+                        printMessageStatus("V", Color.black);
+                        break;
+                    case MessageManagement.DELIVER:
                         printMessageStatus("VV", Color.black);
-                    }
-                } while (!status.equals(" נקראה "));
-                this.isRead = true;
-                printMessageStatus("VV", Color.blue);
-            } catch (Exception e) {
-                messageStatus();
+                        break;
+                }
             }
-        }).start();
-
-    }
-
-
-
-
-
-
-    private void sendMessage() {
-        new Thread(() -> {
-            WebElement footerTextBox = null;
-            try {
-                footerTextBox = this.driver.findElement(By.tagName("footer"));
-                WebElement textBox = footerTextBox.findElement(By.cssSelector("div[role='textbox']"));
-                textBox.sendKeys(this.textField.getText());
-                footerTextBox.findElement(By.cssSelector("button[class='tvf2evcx oq44ahr5 lb5m6g5c svlsagor p2rjqpw5 epia9gcq']")).click();
-                JLabel messageSent = Helper.addLabel(this, "Message Sent successfully", this.getWidth() / 2 - SEND_PRINT_WIDTH / 2, this.getHeight() * 4 / 5 - SEND_PRINT_HEIGHT / 2, SEND_PRINT_WIDTH, SEND_PRINT_HEIGHT);
-                JLabel messageStatus = Helper.addLabel(this, "Message Status: ", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 4, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
-               this.messageStatus = Helper.addLabel(this,"", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 2, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
-                printMessageStatus("V", Color.black);
-               this.isSent = true;
-                repaint();
-                Thread.sleep(3000);
-                messageSent.setVisible(false);
-            } catch (Exception e) {
-                sendMessage();
-            }
+            printMessageStatus("VV", Color.blue);
         }).start();
     }
+
+    private void printMessageSent(){
+        JLabel messageSent = Helper.addLabel(this, "Message Sent successfully", this.getWidth() / 2 - SEND_PRINT_WIDTH / 2, this.getHeight() * 4 / 5 - SEND_PRINT_HEIGHT / 2, SEND_PRINT_WIDTH, SEND_PRINT_HEIGHT);
+        JLabel messageStatus = Helper.addLabel(this, "Message Status: ", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 4, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
+        this.messageStatus = Helper.addLabel(this,"", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 2, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
+
+        this.isSent = true;
+        repaint();
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        messageSent.setVisible(false);
+    }
+
     private void printMessageStatus(String status, Color color) {
         Font font = new Font("Ariel", Font.BOLD, FONT_SIZE_BUTTON * 2);
         this.messageStatus.setText(status);
