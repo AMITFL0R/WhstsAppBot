@@ -103,6 +103,14 @@ public class MessageManagement {
 
     }
 
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     public String comment(ChromeDriver driver){
         new Thread(()->{
             while (!this.isSent){
@@ -123,11 +131,11 @@ public class MessageManagement {
                 if (messageClass.contains("message-in")){
                     WebElement comment=this.lastMessage.findElement(By.cssSelector("span[dir='rtl']"));
                     this.comment=comment.getText();
-                    this.received=true;
+                    System.out.println(this.comment);
                     break;
                 }
             }
-
+            this.received=true;
         }).start();
         return this.comment;
     }

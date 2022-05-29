@@ -38,7 +38,7 @@ public class WhatsAppScene extends JPanel {
         this.management=new MessageManagement();
         mainView();
         logInListener();
-        this.backGround = new ImageIcon("C:\\Users\\DELL\\IdeaProjects\\NewWhatsApp\\src\\main\\resources\\whatsapp web.png");
+        this.backGround = new ImageIcon("whatsapp web.png");
         this.setDoubleBuffered(true);
         this.setVisible(true);
     }
@@ -90,23 +90,25 @@ public class WhatsAppScene extends JPanel {
             this.management.messageStatus();
             messageStatus();
             this.comment=this.management.comment(this.driver);
-            new Thread(()->{
-                while (!this.management.isReceived()){
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            receivedMessage();
 
+
+    }
+
+    private void receivedMessage(){
+        new Thread(()->{
+            while (!this.management.isReceived()){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                System.out.println(this.comment);
-                print(this.comment);
 
-            }).start();
+            }
+            System.out.println(this.management.getComment());
+            print(this.management.getComment());
 
-
-
-
+        }).start();
     }
 
     private void messageStatus(){
