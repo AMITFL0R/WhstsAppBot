@@ -7,17 +7,21 @@ import java.awt.*;
 public class WhatsAppScene extends JPanel {
 
     public static final int WELCOME_MASSAGE_WIDTH = 350,
-            ERROR_SHOW_TIME = 3000,FONT_SIZE_BUTTON = 18,
-            OPEN_BUTTON_WIDTH = 180, OPEN_BUTTON_HEIGHT = 50, OPEN_BUTTON_Y = 450,
+            ERROR_SHOW_TIME = 3000, FONT_SIZE_BUTTON = 18,
+            OPEN_BUTTON_WIDTH = 180,
+    OPEN_BUTTON_HEIGHT = 50, OPEN_BUTTON_Y = 450,
             TEXT_FIELD_WIDTH = 200, TEXT_FIELD_HEIGHT = 60,
-            ERROR_PRINT_WIDTH = 220, ERROR_PRINT_HEIGHT = 70,
+            PRINT_WIDTH = 220, PRINT_HEIGHT = 70,
             SEND_PRINT_WIDTH = 300, SEND_PRINT_HEIGHT = 70,
             MESSAGE_STATUS_WIDTH = 200, MESSAGE_STATUS_HEIGHT = 40;
+    public static final int REPORT_BUTTON_WIDTH = 100,REPORT_BUTTON_HEIGHT=50, BELOW_MARGIN =45,RIGHT_MARGIN=20;
 
 
     private ImageIcon backGround;
     private JTextField phoneNumberField;
     private JTextField textField;
+    private JLabel phoneNumberLabel;
+    private JLabel textLabel;
     private JLabel welcomeSign;
     private JButton openWhatsApp;
     private ChromeDriver driver;
@@ -30,15 +34,13 @@ public class WhatsAppScene extends JPanel {
     private String comment;
 
 
-
-
     public WhatsAppScene(int x, int y, int width, int height) {
+        this.backGround = new ImageIcon("whatsapp web.png");
         this.setBounds(x, y, width, height);
         this.setLayout(null);
-        this.management=new MessageManagement();
+        this.management = new MessageManagement();
         mainView();
         logInListener();
-        this.backGround = new ImageIcon("whatsapp web.png");
         this.setDoubleBuffered(true);
         this.setVisible(true);
     }
@@ -46,9 +48,9 @@ public class WhatsAppScene extends JPanel {
     private void mainView() {
         this.openWhatsApp = Helper.addButton(this, "Open WhatsApp", this.getWidth() / 2 - OPEN_BUTTON_WIDTH / 2, OPEN_BUTTON_Y, OPEN_BUTTON_WIDTH, OPEN_BUTTON_HEIGHT);
         this.phoneNumberField = Helper.addTextField(this, this.getWidth() / 3 - TEXT_FIELD_WIDTH / 2, this.getHeight() / 2 - TEXT_FIELD_HEIGHT / 2, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
-        JLabel phoneNumber = Helper.addLabel(this, "Enter Phone Number", this.phoneNumberField.getX(), this.phoneNumberField.getY() - TEXT_FIELD_HEIGHT * 5 / 6, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
+        this.phoneNumberLabel = Helper.addLabel(this, "Enter Phone Number", this.phoneNumberField.getX(), this.phoneNumberField.getY() - TEXT_FIELD_HEIGHT * 5 / 6, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
         this.textField = Helper.addTextField(this, this.getWidth() * 2 / 3 - TEXT_FIELD_WIDTH / 2, this.getHeight() / 2 - TEXT_FIELD_HEIGHT / 2, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
-        JLabel textField = Helper.addLabel(this, "Enter Your Text", this.textField.getX(), this.phoneNumberField.getY() - TEXT_FIELD_HEIGHT * 5 / 6, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
+        this.textLabel = Helper.addLabel(this, "Enter Your Text", this.textField.getX(), this.phoneNumberField.getY() - TEXT_FIELD_HEIGHT * 5 / 6, TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
         this.welcomeSign = Helper.addLabel(this, "Hey! Welcome to our whatsappBot", this.phoneNumberField.getX(), this.getHeight() / 4, WELCOME_MASSAGE_WIDTH, TEXT_FIELD_HEIGHT);
 
     }
@@ -67,43 +69,64 @@ public class WhatsAppScene extends JPanel {
         } else if (!validDetails.validPhoneNumber(this.phoneNumberField.getText())) {
             print("Invalid phone number");
         } else {
+            removeMainView();
             connectWhatsApp();
 
         }
     }
 
     private void connectWhatsApp() {
-        ConnectWhatsapp connect=new ConnectWhatsapp();
-        this.driver=connect.initialDriver(this.driver);
-        this.driver=connect.connection(this.driver);
-        this.driver=connect.enterChat(this.phoneNumberField.getText(),this.driver);
-        while (!connect.isConnect()) {
-            new Thread(() -> {
+        ConnectWhatsapp connect = new ConnectWhatsapp();
+        new Thread(() -> {
+            this.driver = connect.initialDriver(this.driver);
+            this.driver = connect.enterChat(this.phoneNumberField.getText(), this.driver);
+            this.driver = connect.connection(this.driver);
+            print("connection succeeded");
+            new Thread(()->{
+                this.driver = this.management.sendMessage(this.driver, this.textField.getText());
+                printMessageSent();
+//            }).start();
+//            new Thread(()->{
+                this.lastMessage = this.management.getLastMessage(this.driver);
+                this.management.messageStatus();
+                messageStatus();
             }).start();
-        }
-        new Thread(()->{
-            this.driver=this.management.sendMessage(this.driver,this.textField.getText());
-            printMessageSent();
+            new Thread(()->{
+                this.comment = this.management.comment(this.driver);
+                receivedMessage();
+                createReport();
+            }).start();
         }).start();
-        print("connection succeeded");
-        this.lastMessage=this.management.getLastMessage(this.driver);
-            this.management.messageStatus();
-            messageStatus();
-            this.comment=this.management.comment(this.driver);
-            receivedMessage();
+    }
+    private void createReport(){
+        JButton temp= Helper.addButton(this,"Report",this.getWidth()-REPORT_BUTTON_WIDTH- RIGHT_MARGIN,this.getHeight()-REPORT_BUTTON_HEIGHT- BELOW_MARGIN, REPORT_BUTTON_WIDTH,REPORT_BUTTON_HEIGHT);
+        temp.addActionListener((e)->{
+            CreateReport report=new CreateReport(this.phoneNumberField.getText(),this.textField.getText(),this.comment);
+            print("Report created!");
 
+        });
+    }
+
+    private void removeMainView() {
+        new Thread(() -> {
+            this.textLabel.setVisible(false);
+            this.phoneNumberLabel.setVisible(false);
+            this.textField.setVisible(false);
+            this.phoneNumberField.setVisible(false);
+            this.openWhatsApp.setVisible(false);
+        }).start();
 
     }
 
-    private void receivedMessage(){
-        new Thread(()->{
-            while (!this.management.isReceived()){
+
+    private void receivedMessage() {
+        new Thread(() -> {
+            while (!this.management.isReceived()) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
             }
             System.out.println(this.management.getComment());
             print(this.management.getComment());
@@ -111,17 +134,17 @@ public class WhatsAppScene extends JPanel {
         }).start();
     }
 
-    private void messageStatus(){
-        new Thread(()-> {
-            while (!this.management.isSent()){
+    private void messageStatus() {
+        new Thread(() -> {
+            while (!this.management.isSent()) {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            while (!this.management.isRead()){
-                switch (this.management.getMessageStatus()){
+            while (!this.management.isRead()) {
+                switch (this.management.getMessageStatus()) {
                     case MessageManagement.SENT:
                         printMessageStatus("V", Color.black);
                         break;
@@ -135,19 +158,21 @@ public class WhatsAppScene extends JPanel {
     }
 
 
-    private void printMessageSent(){
-        JLabel messageSent = Helper.addLabel(this, "Message Sent successfully", this.getWidth() / 2 - SEND_PRINT_WIDTH / 2, this.getHeight() * 4 / 5 - SEND_PRINT_HEIGHT / 2, SEND_PRINT_WIDTH, SEND_PRINT_HEIGHT);
-        JLabel messageStatus = Helper.addLabel(this, "Message Status: ", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 4, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
-        this.messageStatus = Helper.addLabel(this,"", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 2, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
+    private void printMessageSent() {
+        new Thread(() -> {
+            JLabel messageSent = Helper.addLabel(this, "Message Sent successfully", this.getWidth() / 2 - SEND_PRINT_WIDTH / 2, this.getHeight() * 4 / 5 - SEND_PRINT_HEIGHT / 2, SEND_PRINT_WIDTH, SEND_PRINT_HEIGHT);
+            JLabel messageStatus = Helper.addLabel(this, "Message Status: ", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 4, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
+            this.messageStatus = Helper.addLabel(this, "", 0, this.getHeight() - MESSAGE_STATUS_HEIGHT * 2, MESSAGE_STATUS_WIDTH, MESSAGE_STATUS_HEIGHT);
+            this.isSent = true;
+            repaint();
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            messageSent.setVisible(false);
+        }).start();
 
-        this.isSent = true;
-        repaint();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        messageSent.setVisible(false);
     }
 
     private void printMessageStatus(String status, Color color) {
@@ -161,7 +186,7 @@ public class WhatsAppScene extends JPanel {
 
     private void print(String printOnBoard) {
         new Thread(() -> {
-            JLabel print = Helper.addLabel(this, printOnBoard, this.getWidth() / 2 - ERROR_PRINT_WIDTH / 2, this.openWhatsApp.getY() - ERROR_PRINT_HEIGHT, ERROR_PRINT_WIDTH, ERROR_PRINT_HEIGHT);
+            JLabel print = Helper.addLabel(this, printOnBoard, this.getWidth() / 2 - PRINT_WIDTH / 2, this.openWhatsApp.getY() - PRINT_HEIGHT, PRINT_WIDTH, PRINT_HEIGHT);
             repaint();
             try {
                 Thread.sleep(ERROR_SHOW_TIME);

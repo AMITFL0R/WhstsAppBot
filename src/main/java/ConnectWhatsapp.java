@@ -39,7 +39,6 @@ public class ConnectWhatsapp {
     }
 
     public ChromeDriver connection(ChromeDriver driver) {
-        new Thread(() -> {
             WebElement chatScreen = null;
             try {
                 chatScreen = driver.findElement(By.id("side"));
@@ -47,7 +46,6 @@ public class ConnectWhatsapp {
             } catch (Exception e) {
                 connection(driver);
             }
-        }).start();
         return driver;
     }
 }

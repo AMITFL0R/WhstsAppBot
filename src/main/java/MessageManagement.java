@@ -45,6 +45,10 @@ public class MessageManagement {
         return this.isSent;
     }
 
+    public void setSent(boolean sent) {
+        isSent = sent;
+    }
+
     public ChromeDriver sendMessage(ChromeDriver driver, String text) {
         WebElement footerTextBox = null;
         try {
@@ -60,7 +64,6 @@ public class MessageManagement {
     }
 
     public WebElement getLastMessage(ChromeDriver driver) {
-        new Thread(() -> {
             try {
 
                 while (!this.isSent) {
@@ -75,7 +78,6 @@ public class MessageManagement {
             } catch (Exception e) {
                 getLastMessage(driver);
             }
-        }).start();
         return this.lastMessage;
     }
 
@@ -112,7 +114,7 @@ public class MessageManagement {
     }
 
     public String comment(ChromeDriver driver){
-        new Thread(()->{
+
             while (!this.isSent){
                 try {
                     Thread.sleep(3000);
@@ -136,7 +138,6 @@ public class MessageManagement {
                 }
             }
             this.received=true;
-        }).start();
         return this.comment;
     }
 
