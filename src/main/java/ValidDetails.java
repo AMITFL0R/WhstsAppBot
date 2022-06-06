@@ -1,4 +1,4 @@
-import javax.swing.*;
+
 
 public class ValidDetails {
 
@@ -7,12 +7,11 @@ public class ValidDetails {
         return s.equals("");
 
     }
-
     public boolean validPhoneNumber(String phoneNumber) {
         boolean valid = true;
-        if (phoneNumber.length() != 10) {
+        if (phoneNumber.length() != Constants.PHONE_NUMBER_LENGTH) {
             valid = false;
-        } else if (phoneNumber.charAt(0) != '0' || phoneNumber.charAt(1) != '5') {
+        } else if (phoneNumber.charAt(Constants.FIRST_CHAR_INDEX) != Constants.FIRST_CHAR || phoneNumber.charAt(Constants.SECOND_CHAR_INDEX) != Constants.SECOND_CHAR) {
             valid = false;
         } else {
             for (int i = 0; i < phoneNumber.length(); i++) {
